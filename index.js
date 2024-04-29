@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
@@ -28,6 +28,45 @@ async function run() {
         await client.connect();
 
         const craftsCollection = client.db('craftsDB').collection('crafts')
+
+        app.get('/crafts', async (req, res) => {
+            const cursor = craftsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+        app.get('/craft/:id', async (req, res) => {
+            const query = { _id: new ObjectId(req.params.id) }
+            const result = await craftsCollection.findOne(query);
+            res.send(result)
+        })
+
+        app.get('/myItem/:email', async (req, res) => {
+            // console.log()
+            const query = { email: req.params.email }
+            const result = await craftsCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.put('/craft/:id', async (req, res) => {
+            const filter = { _id: new ObjectId(req.params.id) }
+            const updatedItem = req.body
+            const item = {
+                $set: {
+                    name: updatedItem.name,
+                    image: updatedItem.image,
+                    category: updatedItem.category,
+                    customization: updatedItem.customization,
+                    price: updatedItem.price,
+                    rating: updatedItem.rating,
+                    time: updatedItem.time,
+                    status: updatedItem.status,
+                    details: updatedItem.details,
+                }
+            }
+            const result = await craftsCollection.updateOne(filter, item)
+            res.send(result)
+        })
 
         app.post('/crafts', async (req, res) => {
             const newCraft = req.body;
